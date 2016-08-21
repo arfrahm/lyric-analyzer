@@ -2,12 +2,14 @@
 import urllib2
 import time
 import sys
+import re
 from bs4 import BeautifulSoup
 
 # Set variables
 genre = "country"
 list_url = "http://genius.com/tags/" + genre + "/all"
 user_agent = [("user-agent", "Chrome/18.0.1025.133")]
+excluded_chars = ',"'
 
 # Create an opener that has our browser user-agent to prevent being denied
 opener = urllib2.build_opener()
@@ -41,25 +43,32 @@ for page_count in range(50):
         lyrics = songsoup.find(attrs={"class": "lyrics"}).get_text()
         word_count = 0
         song_count += 1
+        lyrics = lyrics.replace('\n', ' ')
+        lyrics = lyrics.translate({ord(c): None for c in excluded_chars})
         for word in lyrics.split(" "):
+                    
+
             if("[" in word):
                 songtext = False
-            elif("]" in word and not songtext):
+            elif("]" in word):
                 songtext = True
-
-            if("googletag." in word):
                 continue
-            if(songtext):
-                if(word in words_used):
-                    words_used[word] += 1
-                else:
-                    words_used[word] = 1
+              
+
+            if("googletag." in word or not songtext):
+                continue
+        
+            if(word in words_used):
+                words_used[word] += 1
+                print word, " ", songlink
+            else:
+                words_used[word] = 1
+                print word, " ", songlink
 
             word_count += 1
-
-        print "Analyzed " + str(word_count) + " words in " + str(time.time() - start_time) + "s :"
-        print "\t" + songlink
-        print "Total analyzed: " + str(song_count) + "\n"
+        # print "Analyzed " + str(word_count) + " words in " + str(time.time() - start_time) + "s :"
+        # print "\t" + songlink
+        # print "Total analyzed: " + str(song_count) + "\n"
 
 
 with open("lyriclist.txt", 'w') as outfile:
